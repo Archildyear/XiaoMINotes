@@ -38,468 +38,218 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 
-public class SqlNote {
-    private static final String TAG = SqlNote.class.getSimpleName();
-
-    private static final int INVALID_ID = -99999;
-
-    public static final String[] PROJECTION_NOTE = new String[] {
-            NoteColumns.ID, NoteColumns.ALERTED_DATE, NoteColumns.BG_COLOR_ID,
-            NoteColumns.CREATED_DATE, NoteColumns.HAS_ATTACHMENT, NoteColumns.MODIFIED_DATE,
-            NoteColumns.NOTES_COUNT, NoteColumns.PARENT_ID, NoteColumns.SNIPPET, NoteColumns.TYPE,
-            NoteColumns.WIDGET_ID, NoteColumns.WIDGET_TYPE, NoteColumns.SYNC_ID,
-            NoteColumns.LOCAL_MODIFIED, NoteColumns.ORIGIN_PARENT_ID, NoteColumns.GTASK_ID,
-            NoteColumns.VERSION
+/*
+ * Description：用于支持小米便签最底层的数据库相关操作，和sqlnote的关系上是子集关系，即data是note的子集（节点）。
+ * SqlData其实就是也就是所谓数据中的数据
+ */
+ 
+package net.micode.notes.gtask.data;
+/*
+ * 功能描述：
+ * 实现过程：
+ * 参数注解： 
+ */
+ 
+public class SqlData {
+	/*
+	 * 功能描述：得到类的简写名称存入字符串TAG中
+	 * 实现过程：调用getSimpleName ()函数
+	 */
+    private static final String TAG = SqlData.class.getSimpleName();
+ 
+    private static final int INVALID_ID = -99999;//为mDataId置初始值-99999
+ 
+ 
+    /**
+     * 来自Notes类中定义的DataColumn中的一些常量
+     */
+ 
+    // 集合了interface DataColumns中所有SF常量
+    public static final String[] PROJECTION_DATA = new String[] {
+            DataColumns.ID, DataColumns.MIME_TYPE, DataColumns.CONTENT, DataColumns.DATA1,
+            DataColumns.DATA3
     };
-
-    public static final int ID_COLUMN = 0;
-
-    public static final int ALERTED_DATE_COLUMN = 1;
-
-    public static final int BG_COLOR_ID_COLUMN = 2;
-
-    public static final int CREATED_DATE_COLUMN = 3;
-
-    public static final int HAS_ATTACHMENT_COLUMN = 4;
-
-    public static final int MODIFIED_DATE_COLUMN = 5;
-
-    public static final int NOTES_COUNT_COLUMN = 6;
-
-    public static final int PARENT_ID_COLUMN = 7;
-
-    public static final int SNIPPET_COLUMN = 8;
-
-    public static final int TYPE_COLUMN = 9;
-
-    public static final int WIDGET_ID_COLUMN = 10;
-
-    public static final int WIDGET_TYPE_COLUMN = 11;
-
-    public static final int SYNC_ID_COLUMN = 12;
-
-    public static final int LOCAL_MODIFIED_COLUMN = 13;
-
-    public static final int ORIGIN_PARENT_ID_COLUMN = 14;
-
-    public static final int GTASK_ID_COLUMN = 15;
-
-    public static final int VERSION_COLUMN = 16;
-
-    private Context mContext;
-
+ 
+    /**
+     * 以下五个变量作为sql表中5列的编号
+     */
+    public static final int DATA_ID_COLUMN = 0;
+ 
+    public static final int DATA_MIME_TYPE_COLUMN = 1;
+ 
+    public static final int DATA_CONTENT_COLUMN = 2;
+ 
+    public static final int DATA_CONTENT_DATA_1_COLUMN = 3;
+ 
+    public static final int DATA_CONTENT_DATA_3_COLUMN = 4;
+ 
     private ContentResolver mContentResolver;
-
+    //判断是否直接用Content生成，是为true，否则为false
     private boolean mIsCreate;
-
-    private long mId;
-
-    private long mAlertDate;
-
-    private int mBgColorId;
-
-    private long mCreatedDate;
-
-    private int mHasAttachment;
-
-    private long mModifiedDate;
-
-    private long mParentId;
-
-    private String mSnippet;
-
-    private int mType;
-
-    private int mWidgetId;
-
-    private int mWidgetType;
-
-    private long mOriginParent;
-
-    private long mVersion;
-
-    private ContentValues mDiffNoteValues;
-
-    private ArrayList<SqlData> mDataList;
-
-    public SqlNote(Context context) {
-        mContext = context;
+ 
+    private long mDataId;
+ 
+    private String mDataMimeType;
+ 
+    private String mDataContent;
+ 
+    private long mDataContentData1;
+ 
+    private String mDataContentData3;
+ 
+    private ContentValues mDiffDataValues;
+ 
+	/*
+	 * 功能描述：构造函数，用于初始化数据
+     * 参数注解：mContentResolver用于获取ContentProvider提供的数据
+     * 参数注解： mIsCreate表征当前数据是用哪种方式创建（两种构造函数的参数不同）
+     * 参数注解： 
+	 */
+    public SqlData(Context context) {
         mContentResolver = context.getContentResolver();
         mIsCreate = true;
-        mId = INVALID_ID;
-        mAlertDate = 0;
-        mBgColorId = ResourceParser.getDefaultBgId(context);
-        mCreatedDate = System.currentTimeMillis();
-        mHasAttachment = 0;
-        mModifiedDate = System.currentTimeMillis();
-        mParentId = 0;
-        mSnippet = "";
-        mType = Notes.TYPE_NOTE;
-        mWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-        mWidgetType = Notes.TYPE_WIDGET_INVALIDE;
-        mOriginParent = 0;
-        mVersion = 0;
-        mDiffNoteValues = new ContentValues();
-        mDataList = new ArrayList<SqlData>();
+        mDataId = INVALID_ID;//mDataId置初始值-99999
+        mDataMimeType = DataConstants.NOTE;
+        mDataContent = "";
+        mDataContentData1 = 0;
+        mDataContentData3 = "";
+        mDiffDataValues = new ContentValues();
     }
-
-    public SqlNote(Context context, Cursor c) {
-        mContext = context;
+ 
+ 
+	/*
+	 * 功能描述：构造函数，初始化数据
+     * 参数注解：mContentResolver用于获取ContentProvider提供的数据
+     * 参数注解： mIsCreate表征当前数据是用哪种方式创建（两种构造函数的参数不同）
+     * 参数注解： 
+     */
+    public SqlData(Context context, Cursor c) {
         mContentResolver = context.getContentResolver();
         mIsCreate = false;
         loadFromCursor(c);
-        mDataList = new ArrayList<SqlData>();
-        if (mType == Notes.TYPE_NOTE)
-            loadDataContent();
-        mDiffNoteValues = new ContentValues();
+        mDiffDataValues = new ContentValues();
     }
-
-    public SqlNote(Context context, long id) {
-        mContext = context;
-        mContentResolver = context.getContentResolver();
-        mIsCreate = false;
-        loadFromCursor(id);
-        mDataList = new ArrayList<SqlData>();
-        if (mType == Notes.TYPE_NOTE)
-            loadDataContent();
-        mDiffNoteValues = new ContentValues();
-
-    }
-
-    private void loadFromCursor(long id) {
-        Cursor c = null;
-        try {
-            c = mContentResolver.query(Notes.CONTENT_NOTE_URI, PROJECTION_NOTE, "(_id=?)",
-                    new String[] {
-                        String.valueOf(id)
-                    }, null);
-            if (c != null) {
-                c.moveToNext();
-                loadFromCursor(c);
-            } else {
-                Log.w(TAG, "loadFromCursor: cursor = null");
-            }
-        } finally {
-            if (c != null)
-                c.close();
-        }
-    }
-
+ 
+    /*
+     * 功能描述：从光标处加载数据
+     * 从当前的光标处将五列的数据加载到该类的对象
+     */
     private void loadFromCursor(Cursor c) {
-        mId = c.getLong(ID_COLUMN);
-        mAlertDate = c.getLong(ALERTED_DATE_COLUMN);
-        mBgColorId = c.getInt(BG_COLOR_ID_COLUMN);
-        mCreatedDate = c.getLong(CREATED_DATE_COLUMN);
-        mHasAttachment = c.getInt(HAS_ATTACHMENT_COLUMN);
-        mModifiedDate = c.getLong(MODIFIED_DATE_COLUMN);
-        mParentId = c.getLong(PARENT_ID_COLUMN);
-        mSnippet = c.getString(SNIPPET_COLUMN);
-        mType = c.getInt(TYPE_COLUMN);
-        mWidgetId = c.getInt(WIDGET_ID_COLUMN);
-        mWidgetType = c.getInt(WIDGET_TYPE_COLUMN);
-        mVersion = c.getLong(VERSION_COLUMN);
+        mDataId = c.getLong(DATA_ID_COLUMN);
+        mDataMimeType = c.getString(DATA_MIME_TYPE_COLUMN);
+        mDataContent = c.getString(DATA_CONTENT_COLUMN);
+        mDataContentData1 = c.getLong(DATA_CONTENT_DATA_1_COLUMN);
+        mDataContentData3 = c.getString(DATA_CONTENT_DATA_3_COLUMN);
     }
-
-    private void loadDataContent() {
-        Cursor c = null;
-        mDataList.clear();
-        try {
-            c = mContentResolver.query(Notes.CONTENT_DATA_URI, SqlData.PROJECTION_DATA,
-                    "(note_id=?)", new String[] {
-                        String.valueOf(mId)
-                    }, null);
-            if (c != null) {
-                if (c.getCount() == 0) {
-                    Log.w(TAG, "it seems that the note has not data");
-                    return;
-                }
-                while (c.moveToNext()) {
-                    SqlData data = new SqlData(mContext, c);
-                    mDataList.add(data);
-                }
-            } else {
-                Log.w(TAG, "loadDataContent: cursor = null");
-            }
-        } finally {
-            if (c != null)
-                c.close();
+ 
+ 
+	/*
+	 * 功能描述：设置用于共享的数据，并提供异常抛出与处理机制
+	 * 参数注解： 
+	 */
+    public void setContent(JSONObject js) throws JSONException {
+        //如果传入的JSONObject对象中有DataColumns.ID这一项，则设置，否则设为INVALID_ID
+        long dataId = js.has(DataColumns.ID) ? js.getLong(DataColumns.ID) : INVALID_ID;
+        if (mIsCreate || mDataId != dataId) {
+            mDiffDataValues.put(DataColumns.ID, dataId);
         }
-    }
-
-    public boolean setContent(JSONObject js) {
-        try {
-            JSONObject note = js.getJSONObject(GTaskStringUtils.META_HEAD_NOTE);
-            if (note.getInt(NoteColumns.TYPE) == Notes.TYPE_SYSTEM) {
-                Log.w(TAG, "cannot set system folder");
-            } else if (note.getInt(NoteColumns.TYPE) == Notes.TYPE_FOLDER) {
-                // for folder we can only update the snnipet and type
-                String snippet = note.has(NoteColumns.SNIPPET) ? note
-                        .getString(NoteColumns.SNIPPET) : "";
-                if (mIsCreate || !mSnippet.equals(snippet)) {
-                    mDiffNoteValues.put(NoteColumns.SNIPPET, snippet);
-                }
-                mSnippet = snippet;
-
-                int type = note.has(NoteColumns.TYPE) ? note.getInt(NoteColumns.TYPE)
-                        : Notes.TYPE_NOTE;
-                if (mIsCreate || mType != type) {
-                    mDiffNoteValues.put(NoteColumns.TYPE, type);
-                }
-                mType = type;
-            } else if (note.getInt(NoteColumns.TYPE) == Notes.TYPE_NOTE) {
-                JSONArray dataArray = js.getJSONArray(GTaskStringUtils.META_HEAD_DATA);
-                long id = note.has(NoteColumns.ID) ? note.getLong(NoteColumns.ID) : INVALID_ID;
-                if (mIsCreate || mId != id) {
-                    mDiffNoteValues.put(NoteColumns.ID, id);
-                }
-                mId = id;
-
-                long alertDate = note.has(NoteColumns.ALERTED_DATE) ? note
-                        .getLong(NoteColumns.ALERTED_DATE) : 0;
-                if (mIsCreate || mAlertDate != alertDate) {
-                    mDiffNoteValues.put(NoteColumns.ALERTED_DATE, alertDate);
-                }
-                mAlertDate = alertDate;
-
-                int bgColorId = note.has(NoteColumns.BG_COLOR_ID) ? note
-                        .getInt(NoteColumns.BG_COLOR_ID) : ResourceParser.getDefaultBgId(mContext);
-                if (mIsCreate || mBgColorId != bgColorId) {
-                    mDiffNoteValues.put(NoteColumns.BG_COLOR_ID, bgColorId);
-                }
-                mBgColorId = bgColorId;
-
-                long createDate = note.has(NoteColumns.CREATED_DATE) ? note
-                        .getLong(NoteColumns.CREATED_DATE) : System.currentTimeMillis();
-                if (mIsCreate || mCreatedDate != createDate) {
-                    mDiffNoteValues.put(NoteColumns.CREATED_DATE, createDate);
-                }
-                mCreatedDate = createDate;
-
-                int hasAttachment = note.has(NoteColumns.HAS_ATTACHMENT) ? note
-                        .getInt(NoteColumns.HAS_ATTACHMENT) : 0;
-                if (mIsCreate || mHasAttachment != hasAttachment) {
-                    mDiffNoteValues.put(NoteColumns.HAS_ATTACHMENT, hasAttachment);
-                }
-                mHasAttachment = hasAttachment;
-
-                long modifiedDate = note.has(NoteColumns.MODIFIED_DATE) ? note
-                        .getLong(NoteColumns.MODIFIED_DATE) : System.currentTimeMillis();
-                if (mIsCreate || mModifiedDate != modifiedDate) {
-                    mDiffNoteValues.put(NoteColumns.MODIFIED_DATE, modifiedDate);
-                }
-                mModifiedDate = modifiedDate;
-
-                long parentId = note.has(NoteColumns.PARENT_ID) ? note
-                        .getLong(NoteColumns.PARENT_ID) : 0;
-                if (mIsCreate || mParentId != parentId) {
-                    mDiffNoteValues.put(NoteColumns.PARENT_ID, parentId);
-                }
-                mParentId = parentId;
-
-                String snippet = note.has(NoteColumns.SNIPPET) ? note
-                        .getString(NoteColumns.SNIPPET) : "";
-                if (mIsCreate || !mSnippet.equals(snippet)) {
-                    mDiffNoteValues.put(NoteColumns.SNIPPET, snippet);
-                }
-                mSnippet = snippet;
-
-                int type = note.has(NoteColumns.TYPE) ? note.getInt(NoteColumns.TYPE)
-                        : Notes.TYPE_NOTE;
-                if (mIsCreate || mType != type) {
-                    mDiffNoteValues.put(NoteColumns.TYPE, type);
-                }
-                mType = type;
-
-                int widgetId = note.has(NoteColumns.WIDGET_ID) ? note.getInt(NoteColumns.WIDGET_ID)
-                        : AppWidgetManager.INVALID_APPWIDGET_ID;
-                if (mIsCreate || mWidgetId != widgetId) {
-                    mDiffNoteValues.put(NoteColumns.WIDGET_ID, widgetId);
-                }
-                mWidgetId = widgetId;
-
-                int widgetType = note.has(NoteColumns.WIDGET_TYPE) ? note
-                        .getInt(NoteColumns.WIDGET_TYPE) : Notes.TYPE_WIDGET_INVALIDE;
-                if (mIsCreate || mWidgetType != widgetType) {
-                    mDiffNoteValues.put(NoteColumns.WIDGET_TYPE, widgetType);
-                }
-                mWidgetType = widgetType;
-
-                long originParent = note.has(NoteColumns.ORIGIN_PARENT_ID) ? note
-                        .getLong(NoteColumns.ORIGIN_PARENT_ID) : 0;
-                if (mIsCreate || mOriginParent != originParent) {
-                    mDiffNoteValues.put(NoteColumns.ORIGIN_PARENT_ID, originParent);
-                }
-                mOriginParent = originParent;
-
-                for (int i = 0; i < dataArray.length(); i++) {
-                    JSONObject data = dataArray.getJSONObject(i);
-                    SqlData sqlData = null;
-                    if (data.has(DataColumns.ID)) {
-                        long dataId = data.getLong(DataColumns.ID);
-                        for (SqlData temp : mDataList) {
-                            if (dataId == temp.getId()) {
-                                sqlData = temp;
-                            }
-                        }
-                    }
-
-                    if (sqlData == null) {
-                        sqlData = new SqlData(mContext);
-                        mDataList.add(sqlData);
-                    }
-
-                    sqlData.setContent(data);
-                }
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, e.toString());
-            e.printStackTrace();
-            return false;
+        mDataId = dataId;
+ 
+        String dataMimeType = js.has(DataColumns.MIME_TYPE) ? js.getString(DataColumns.MIME_TYPE)
+                : DataConstants.NOTE;
+        if (mIsCreate || !mDataMimeType.equals(dataMimeType)) {
+            mDiffDataValues.put(DataColumns.MIME_TYPE, dataMimeType);
         }
-        return true;
-    }
-
-    public JSONObject getContent() {
-        try {
-            JSONObject js = new JSONObject();
-
-            if (mIsCreate) {
-                Log.e(TAG, "it seems that we haven't created this in database yet");
-                return null;
-            }
-
-            JSONObject note = new JSONObject();
-            if (mType == Notes.TYPE_NOTE) {
-                note.put(NoteColumns.ID, mId);
-                note.put(NoteColumns.ALERTED_DATE, mAlertDate);
-                note.put(NoteColumns.BG_COLOR_ID, mBgColorId);
-                note.put(NoteColumns.CREATED_DATE, mCreatedDate);
-                note.put(NoteColumns.HAS_ATTACHMENT, mHasAttachment);
-                note.put(NoteColumns.MODIFIED_DATE, mModifiedDate);
-                note.put(NoteColumns.PARENT_ID, mParentId);
-                note.put(NoteColumns.SNIPPET, mSnippet);
-                note.put(NoteColumns.TYPE, mType);
-                note.put(NoteColumns.WIDGET_ID, mWidgetId);
-                note.put(NoteColumns.WIDGET_TYPE, mWidgetType);
-                note.put(NoteColumns.ORIGIN_PARENT_ID, mOriginParent);
-                js.put(GTaskStringUtils.META_HEAD_NOTE, note);
-
-                JSONArray dataArray = new JSONArray();
-                for (SqlData sqlData : mDataList) {
-                    JSONObject data = sqlData.getContent();
-                    if (data != null) {
-                        dataArray.put(data);
-                    }
-                }
-                js.put(GTaskStringUtils.META_HEAD_DATA, dataArray);
-            } else if (mType == Notes.TYPE_FOLDER || mType == Notes.TYPE_SYSTEM) {
-                note.put(NoteColumns.ID, mId);
-                note.put(NoteColumns.TYPE, mType);
-                note.put(NoteColumns.SNIPPET, mSnippet);
-                js.put(GTaskStringUtils.META_HEAD_NOTE, note);
-            }
-
-            return js;
-        } catch (JSONException e) {
-            Log.e(TAG, e.toString());
-            e.printStackTrace();
+        mDataMimeType = dataMimeType;
+ 
+        String dataContent = js.has(DataColumns.CONTENT) ? js.getString(DataColumns.CONTENT) : "";
+        if (mIsCreate || !mDataContent.equals(dataContent)) {
+            mDiffDataValues.put(DataColumns.CONTENT, dataContent);
         }
-        return null;
+        mDataContent = dataContent;
+ 
+        long dataContentData1 = js.has(DataColumns.DATA1) ? js.getLong(DataColumns.DATA1) : 0;
+        if (mIsCreate || mDataContentData1 != dataContentData1) {
+            mDiffDataValues.put(DataColumns.DATA1, dataContentData1);
+        }
+        mDataContentData1 = dataContentData1;
+ 
+        String dataContentData3 = js.has(DataColumns.DATA3) ? js.getString(DataColumns.DATA3) : "";
+        if (mIsCreate || !mDataContentData3.equals(dataContentData3)) {
+            mDiffDataValues.put(DataColumns.DATA3, dataContentData3);
+        }
+        mDataContentData3 = dataContentData3;
     }
-
-    public void setParentId(long id) {
-        mParentId = id;
-        mDiffNoteValues.put(NoteColumns.PARENT_ID, id);
-    }
-
-    public void setGtaskId(String gid) {
-        mDiffNoteValues.put(NoteColumns.GTASK_ID, gid);
-    }
-
-    public void setSyncId(long syncId) {
-        mDiffNoteValues.put(NoteColumns.SYNC_ID, syncId);
-    }
-
-    public void resetLocalModified() {
-        mDiffNoteValues.put(NoteColumns.LOCAL_MODIFIED, 0);
-    }
-
-    public long getId() {
-        return mId;
-    }
-
-    public long getParentId() {
-        return mParentId;
-    }
-
-    public String getSnippet() {
-        return mSnippet;
-    }
-
-    public boolean isNoteType() {
-        return mType == Notes.TYPE_NOTE;
-    }
-
-    public void commit(boolean validateVersion) {
+ 
+ 
+	/*
+	 * 功能描述：获取共享的数据内容，并提供异常抛出与处理机制
+	 * 参数注解： 
+	 */
+    public JSONObject getContent() throws JSONException {
         if (mIsCreate) {
-            if (mId == INVALID_ID && mDiffNoteValues.containsKey(NoteColumns.ID)) {
-                mDiffNoteValues.remove(NoteColumns.ID);
+            Log.e(TAG, "it seems that we haven't created this in database yet");
+            return null;
+        }
+        //创建JSONObject对象。并将相关数据放入其中，并返回。
+        JSONObject js = new JSONObject();
+        js.put(DataColumns.ID, mDataId);
+        js.put(DataColumns.MIME_TYPE, mDataMimeType);
+        js.put(DataColumns.CONTENT, mDataContent);
+        js.put(DataColumns.DATA1, mDataContentData1);
+        js.put(DataColumns.DATA3, mDataContentData3);
+        return js;
+    }
+ 
+	/*
+	 * 功能描述：commit函数用于把当前造作所做的修改保存到数据库
+	 * 参数注解： 
+	 */
+    public void commit(long noteId, boolean validateVersion, long version) {
+ 
+        if (mIsCreate) {
+            if (mDataId == INVALID_ID && mDiffDataValues.containsKey(DataColumns.ID)) {
+                mDiffDataValues.remove(DataColumns.ID);
             }
-
-            Uri uri = mContentResolver.insert(Notes.CONTENT_NOTE_URI, mDiffNoteValues);
+ 
+            mDiffDataValues.put(DataColumns.NOTE_ID, noteId);
+            Uri uri = mContentResolver.insert(Notes.CONTENT_DATA_URI, mDiffDataValues);
             try {
-                mId = Long.valueOf(uri.getPathSegments().get(1));
+                mDataId = Long.valueOf(uri.getPathSegments().get(1));
             } catch (NumberFormatException e) {
                 Log.e(TAG, "Get note id error :" + e.toString());
                 throw new ActionFailureException("create note failed");
             }
-            if (mId == 0) {
-                throw new IllegalStateException("Create thread id failed");
-            }
-
-            if (mType == Notes.TYPE_NOTE) {
-                for (SqlData sqlData : mDataList) {
-                    sqlData.commit(mId, false, -1);
-                }
-            }
         } else {
-            if (mId <= 0 && mId != Notes.ID_ROOT_FOLDER && mId != Notes.ID_CALL_RECORD_FOLDER) {
-                Log.e(TAG, "No such note");
-                throw new IllegalStateException("Try to update note with invalid id");
-            }
-            if (mDiffNoteValues.size() > 0) {
-                mVersion ++;
+            if (mDiffDataValues.size() > 0) {
                 int result = 0;
                 if (!validateVersion) {
-                    result = mContentResolver.update(Notes.CONTENT_NOTE_URI, mDiffNoteValues, "("
-                            + NoteColumns.ID + "=?)", new String[] {
-                        String.valueOf(mId)
-                    });
+                    result = mContentResolver.update(ContentUris.withAppendedId(
+                            Notes.CONTENT_DATA_URI, mDataId), mDiffDataValues, null, null);
                 } else {
-                    result = mContentResolver.update(Notes.CONTENT_NOTE_URI, mDiffNoteValues, "("
-                            + NoteColumns.ID + "=?) AND (" + NoteColumns.VERSION + "<=?)",
-                            new String[] {
-                                    String.valueOf(mId), String.valueOf(mVersion)
+                    result = mContentResolver.update(ContentUris.withAppendedId(
+                            Notes.CONTENT_DATA_URI, mDataId), mDiffDataValues,
+                            " ? in (SELECT " + NoteColumns.ID + " FROM " + TABLE.NOTE
+                                    + " WHERE " + NoteColumns.VERSION + "=?)", new String[] {
+                                    String.valueOf(noteId), String.valueOf(version)
                             });
                 }
                 if (result == 0) {
                     Log.w(TAG, "there is no update. maybe user updates note when syncing");
                 }
             }
-
-            if (mType == Notes.TYPE_NOTE) {
-                for (SqlData sqlData : mDataList) {
-                    sqlData.commit(mId, validateVersion, mVersion);
-                }
-            }
         }
-
-        // refresh local info
-        loadFromCursor(mId);
-        if (mType == Notes.TYPE_NOTE)
-            loadDataContent();
-
-        mDiffNoteValues.clear();
+ 
+        mDiffDataValues.clear();
         mIsCreate = false;
+    }
+ 
+    /*
+     * 功能描述：获取当前id
+     * 实现过程：
+     * 参数注解： 
+     */
+    public long getId() {
+        return mDataId;
     }
 }
