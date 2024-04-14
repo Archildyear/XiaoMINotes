@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.micode.notes.model;
+package net.micode.notes.model;//小米便签设计模式
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentUris;
