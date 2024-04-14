@@ -35,60 +35,103 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
+/*
+ * Description：用于支持小米便签最底层的数据库相关操作，和sqlnote的关系上是子集关系，即data是note的子集（节点）。
+ * SqlData其实就是也就是所谓数据中的数据
+ */
+ 
+package net.micode.notes.gtask.data;
+/*
+ * 功能描述：
+ * 实现过程：
+ * 参数注解： 
+ */
+ 
 public class SqlData {
+	/*
+	 * 功能描述：得到类的简写名称存入字符串TAG中
+	 * 实现过程：调用getSimpleName ()函数
+	 */
     private static final String TAG = SqlData.class.getSimpleName();
-
-    private static final int INVALID_ID = -99999;
-
+ 
+private static final int INVALID_ID = -99999;
+=为mDataId置初始值-99999
+ 
+ 
+    /**
+     * 来自Notes类中定义的DataColumn中的一些常量
+     */
+ 
+    // 集合了interface DataColumns中所有SF常量
     public static final String[] PROJECTION_DATA = new String[] {
             DataColumns.ID, DataColumns.MIME_TYPE, DataColumns.CONTENT, DataColumns.DATA1,
             DataColumns.DATA3
     };
-
+ 
+    /**
+     * 以下五个变量作为sql表中5列的编号
+     */
     public static final int DATA_ID_COLUMN = 0;
-
+ 
     public static final int DATA_MIME_TYPE_COLUMN = 1;
-
+ 
     public static final int DATA_CONTENT_COLUMN = 2;
-
+ 
     public static final int DATA_CONTENT_DATA_1_COLUMN = 3;
-
+ 
     public static final int DATA_CONTENT_DATA_3_COLUMN = 4;
-
+ 
     private ContentResolver mContentResolver;
-
+    //判断是否直接用Content生成，是为true，否则为false
     private boolean mIsCreate;
-
+ 
     private long mDataId;
-
+ 
     private String mDataMimeType;
-
+ 
     private String mDataContent;
-
+ 
     private long mDataContentData1;
-
+ 
     private String mDataContentData3;
-
+ 
     private ContentValues mDiffDataValues;
-
+ 
+	/*
+	 * 功能描述：构造函数，用于初始化数据
+     * 参数注解：mContentResolver用于获取ContentProvider提供的数据
+     * 参数注解： mIsCreate表征当前数据是用哪种方式创建（两种构造函数的参数不同）
+     * 参数注解： 
+	 */
     public SqlData(Context context) {
         mContentResolver = context.getContentResolver();
         mIsCreate = true;
-        mDataId = INVALID_ID;
+        mDataId = INVALID_ID;//mDataId置初始值-99999
         mDataMimeType = DataConstants.NOTE;
         mDataContent = "";
         mDataContentData1 = 0;
         mDataContentData3 = "";
         mDiffDataValues = new ContentValues();
     }
-
+ 
+ 
+	/*
+	 * 功能描述：构造函数，初始化数据
+     * 参数注解：mContentResolver用于获取ContentProvider提供的数据
+     * 参数注解： mIsCreate表征当前数据是用哪种方式创建（两种构造函数的参数不同）
+     * 参数注解： 
+	 */
     public SqlData(Context context, Cursor c) {
         mContentResolver = context.getContentResolver();
         mIsCreate = false;
         loadFromCursor(c);
         mDiffDataValues = new ContentValues();
     }
-
+ 
+    /*
+     * 功能描述：从光标处加载数据
+     * 从当前的光标处将五列的数据加载到该类的对象
+     */
     private void loadFromCursor(Cursor c) {
         mDataId = c.getLong(DATA_ID_COLUMN);
         mDataMimeType = c.getString(DATA_MIME_TYPE_COLUMN);
@@ -96,45 +139,57 @@ public class SqlData {
         mDataContentData1 = c.getLong(DATA_CONTENT_DATA_1_COLUMN);
         mDataContentData3 = c.getString(DATA_CONTENT_DATA_3_COLUMN);
     }
-
+ 
+ 
+	/*
+	 * 功能描述：设置用于共享的数据，并提供异常抛出与处理机制
+	 * 参数注解： 
+	 */
     public void setContent(JSONObject js) throws JSONException {
+        //如果传入的JSONObject对象中有DataColumns.ID这一项，则设置，否则设为INVALID_ID
         long dataId = js.has(DataColumns.ID) ? js.getLong(DataColumns.ID) : INVALID_ID;
         if (mIsCreate || mDataId != dataId) {
             mDiffDataValues.put(DataColumns.ID, dataId);
         }
         mDataId = dataId;
-
+ 
         String dataMimeType = js.has(DataColumns.MIME_TYPE) ? js.getString(DataColumns.MIME_TYPE)
                 : DataConstants.NOTE;
         if (mIsCreate || !mDataMimeType.equals(dataMimeType)) {
             mDiffDataValues.put(DataColumns.MIME_TYPE, dataMimeType);
         }
         mDataMimeType = dataMimeType;
-
+ 
         String dataContent = js.has(DataColumns.CONTENT) ? js.getString(DataColumns.CONTENT) : "";
         if (mIsCreate || !mDataContent.equals(dataContent)) {
             mDiffDataValues.put(DataColumns.CONTENT, dataContent);
         }
         mDataContent = dataContent;
-
+ 
         long dataContentData1 = js.has(DataColumns.DATA1) ? js.getLong(DataColumns.DATA1) : 0;
         if (mIsCreate || mDataContentData1 != dataContentData1) {
             mDiffDataValues.put(DataColumns.DATA1, dataContentData1);
         }
         mDataContentData1 = dataContentData1;
-
+ 
         String dataContentData3 = js.has(DataColumns.DATA3) ? js.getString(DataColumns.DATA3) : "";
         if (mIsCreate || !mDataContentData3.equals(dataContentData3)) {
             mDiffDataValues.put(DataColumns.DATA3, dataContentData3);
         }
         mDataContentData3 = dataContentData3;
     }
-
+ 
+ 
+	/*
+	 * 功能描述：获取共享的数据内容，并提供异常抛出与处理机制
+	 * 参数注解： 
+    */
     public JSONObject getContent() throws JSONException {
         if (mIsCreate) {
             Log.e(TAG, "it seems that we haven't created this in database yet");
             return null;
         }
+        //创建JSONObject对象。并将相关数据放入其中，并返回。
         JSONObject js = new JSONObject();
         js.put(DataColumns.ID, mDataId);
         js.put(DataColumns.MIME_TYPE, mDataMimeType);
@@ -143,14 +198,18 @@ public class SqlData {
         js.put(DataColumns.DATA3, mDataContentData3);
         return js;
     }
-
+ 
+	/*
+	 * 功能描述：commit函数用于把当前造作所做的修改保存到数据库
+	 * 参数注解：
+	 */
     public void commit(long noteId, boolean validateVersion, long version) {
-
+ 
         if (mIsCreate) {
             if (mDataId == INVALID_ID && mDiffDataValues.containsKey(DataColumns.ID)) {
                 mDiffDataValues.remove(DataColumns.ID);
             }
-
+ 
             mDiffDataValues.put(DataColumns.NOTE_ID, noteId);
             Uri uri = mContentResolver.insert(Notes.CONTENT_DATA_URI, mDiffDataValues);
             try {
@@ -178,11 +237,16 @@ public class SqlData {
                 }
             }
         }
-
+ 
         mDiffDataValues.clear();
         mIsCreate = false;
     }
-
+ 
+    /*
+     * 功能描述：获取当前id
+     * 实现过程：
+     * 参数注解：
+     */
     public long getId() {
         return mDataId;
     }
