@@ -111,9 +111,7 @@ public class DataUtils {
         return false;
     }
 
-    /**
-     * Get the all folder count except system folders {@link Notes#TYPE_SYSTEM}}
-     */
+    
     public static int getUserFolderCount(ContentResolver resolver) {
         Cursor cursor =resolver.query(Notes.CONTENT_NOTE_URI,
                 new String[] { "COUNT(*)" },
