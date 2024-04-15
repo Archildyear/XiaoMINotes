@@ -48,10 +48,7 @@ public class BackupUtils {
         return sInstance;
     }
 
-    /**
-     * Following states are signs to represents backup or restore
-     * status
-     */
+   
     // Currently, the sdcard is not mounted
     public static final int STATE_SD_CARD_UNMOUONTED           = 0;
     // The backup file not exist
